@@ -1,0 +1,18 @@
+EXAMPLE FOR REMOTE TTY (TTY OVER TCP) USING SOCAT
+
+You have a host with some serial device like a modem or a bluetooth interface
+(modem server)
+You want to make use of this device on a different host. (client)
+
+1) on the modem server start a process that accepts network connections and
+links them with the serial device /dev/tty0:
+
+$ socat tcp-l:54321,reuseaddr,fork file:/dev/tty0,nonblock,waitlock=/var/run/tty0.lock
+
+2) on the client start a process that creates a pseudo tty and links it with a
+tcp connection to the modem server:
+
+$ socat pty,link=$HOME/dev/vmodem0,waitslave tcp:modem-server:54321
+
+
+sudo socat tcp-l:54321,reuseaddr,fork file:/dev/ttyUSB0,nonblock,waitlock=/var/run/ttyUSB0.lock

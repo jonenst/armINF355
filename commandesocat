@@ -1,0 +1,1 @@
+sudo socat tcp-l:54321,reuseaddr,fork file:/dev/ttyUSB0,nonblock
