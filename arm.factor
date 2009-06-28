@@ -3,8 +3,7 @@
 USING: kernel accessors math locals math.functions io bit-arrays sequences namespaces arrays math.bitwise prettyprint math.constants io.encodings.binary io.servers.connection io.binary io.sockets calendar threads fry ;
 IN: arm
 
-
-! TODO: calibration et exception quand valeurs interdites
+<PRIVATE
 
 TUPLE: point x y ;
 
@@ -187,6 +186,19 @@ SYMBOL: current-angle-elbow
   l2 current-angle-shoulder get to-radians 
   l1 current-angle-shoulder get current-angle-elbow get + to-radians [ sin * ] 2bi@ + ;
 
+: distance-smaller-than? ( x y eps -- bool )
+  '[ - abs _ < ] call ;
+
+: arrived? ( x y -- bool )
+  0.1 distance-smaller-than? ;
+
+:: avance ( a1 a2 -- newa2 )
+   a1 a2 arrived?
+   [ a1 ]
+   [ a1 a2 < [ a1 0.3 + ] [ a1 0.3 - ] if ] if ;
+
+PRIVATE>
+
 :: arm-control-degrees ( a1 a2 -- )
    a1 a2 check-angles
    [ a1 current-angle-shoulder set
@@ -200,18 +212,14 @@ SYMBOL: current-angle-elbow
 : arm-control-position ( x y -- )
   point boa intersect-angles arm-control-radian 2drop ;
 
+: close ( -- )
+  HEX: 85 HEX: A0 serial-test
+  300 milliseconds sleep ;
+  
+: open ( -- )
+  HEX: 85 HEX: 60 serial-test
+  300 milliseconds sleep ;
 
-
-: distance-smaller-than? ( x y eps -- bool )
-  '[ - abs _ < ] call ;
-
-: arrived? ( x y -- bool )
-  0.1 distance-smaller-than? ;
-
-:: avance ( a1 a2 -- newa2 )
-   a1 a2 arrived?
-   [ a1 ]
-   [ a1 a2 < [ a1 0.3 + ] [ a1 0.3 - ] if ] if ;
 
 :: go-to-angles ( shoulder elbow -- )
    elbow current-angle-elbow get arrived? shoulder current-angle-shoulder get arrived? and
@@ -234,7 +242,10 @@ SYMBOL: current-angle-elbow
   if ;
 
 
-: demo ( -- )
+:: demo ( i -- )
+i 0 < 
+[ ]
+[ 
 18 1 go-to-position
 31 1 go-to-position
 31 5 go-to-position
@@ -243,4 +254,21 @@ SYMBOL: current-angle-elbow
 25 1 go-to-position
 25 5 go-to-position
 18 5 go-to-position
-demo ;
+i 1 - demo
+] if  ;
+
+:: pince ( i -- )
+i 0 <
+[ ]
+[
+  open
+  30 4 go-to-position
+  close
+  30 15 go-to-position
+  10 15 go-to-position
+  10 30  go-to-position
+  30 4 go-to-position
+  open
+  i 1 - pince
+] if ;
+
